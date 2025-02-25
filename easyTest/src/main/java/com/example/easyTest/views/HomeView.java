@@ -59,7 +59,11 @@ public class HomeView extends VerticalLayout {
                     questionLayout.add(new Paragraph(q.getQuestion()));
 
                     RadioButtonGroup<String> group = new RadioButtonGroup<>();
-                    group.setItems("a", "b", "c", "d");
+                    group.setItems(q.getAnswer());
+                    group.setItemLabelGenerator(answer -> {
+                        int index = q.getAnswer().indexOf(answer);
+                        return (char)('a' + index) + ". " + answer;
+                    });
                     group.setLabel("Choose your answer:");
                     questionLayout.add(group);
 
@@ -68,6 +72,8 @@ public class HomeView extends VerticalLayout {
                 })
                 .toList();
     }
+
+
 
     private void addSubmitButton() {
         Button submitButton = new Button("Submit Answers", event -> checkAnswers());
@@ -87,7 +93,7 @@ public class HomeView extends VerticalLayout {
             QuestionTest question = questions.get(i);
             RadioButtonGroup<String> group = answerGroups.get(i);
             String selectedAnswer = group.getValue();
-            String correctAnswer = String.valueOf((char)('a' + question.getSolution()));
+            String correctAnswer = question.getAnswer().get(question.getSolution());
 
             boolean isCorrect = selectedAnswer != null && selectedAnswer.equals(correctAnswer);
             if (isCorrect) {
@@ -112,4 +118,5 @@ public class HomeView extends VerticalLayout {
         Button restartButton = new Button("Start Another Quiz", event -> startQuiz());
         resultLayout.add(restartButton);
     }
+
 }
