@@ -20,12 +20,26 @@ public class HomeView extends VerticalLayout {
     private final QuestionTestRepository repository;
     private List<QuestionTest> questions;
     private List<RadioButtonGroup<String>> answerGroups;
+    private VerticalLayout quizLayout;
+    private VerticalLayout resultLayout;
 
     @Autowired
     public HomeView(QuestionTestRepository repository) {
         this.repository = repository;
 
+        quizLayout = new VerticalLayout();
+        resultLayout = new VerticalLayout();
+
         add(new H1("EasyTest Quiz"));
+        add(quizLayout);
+        add(resultLayout);
+
+        startQuiz();
+    }
+
+    private void startQuiz() {
+        quizLayout.removeAll();
+        resultLayout.removeAll();
 
         loadQuestions();
         createQuestionViews();
@@ -49,7 +63,7 @@ public class HomeView extends VerticalLayout {
                     group.setLabel("Choose your answer:");
                     questionLayout.add(group);
 
-                    add(questionLayout);
+                    quizLayout.add(questionLayout);
                     return group;
                 })
                 .toList();
@@ -57,21 +71,45 @@ public class HomeView extends VerticalLayout {
 
     private void addSubmitButton() {
         Button submitButton = new Button("Submit Answers", event -> checkAnswers());
-        add(submitButton);
+        quizLayout.add(submitButton);
     }
 
     private void checkAnswers() {
+        quizLayout.removeAll();
+        resultLayout.removeAll();
+
+        resultLayout.add(new H2("Correction"));
+
         int correctAnswers = 0;
+        VerticalLayout summaryLayout = new VerticalLayout();
+
         for (int i = 0; i < questions.size(); i++) {
             QuestionTest question = questions.get(i);
             RadioButtonGroup<String> group = answerGroups.get(i);
             String selectedAnswer = group.getValue();
-            if (selectedAnswer != null && selectedAnswer.equals(String.valueOf((char)('a' + question.getSolution())))) {
+            String correctAnswer = String.valueOf((char)('a' + question.getSolution()));
+
+            boolean isCorrect = selectedAnswer != null && selectedAnswer.equals(correctAnswer);
+            if (isCorrect) {
                 correctAnswers++;
             }
+
+            Paragraph questionResult = new Paragraph(String.format(
+                    "Question %d: %s - Your answer: %s, Correct answer: %s - %s",
+                    i + 1,
+                    question.getQuestion(),
+                    selectedAnswer != null ? selectedAnswer : "Not answered",
+                    correctAnswer,
+                    isCorrect ? "Correct" : "Incorrect"
+            ));
+            summaryLayout.add(questionResult);
         }
 
-        Paragraph result = new Paragraph("You got " + correctAnswers + " out of " + questions.size() + " correct!");
-        add(result);
+        Paragraph result = new Paragraph(String.format("You got %d out of %d correct!", correctAnswers, questions.size()));
+        resultLayout.add(result);
+        resultLayout.add(summaryLayout);
+
+        Button restartButton = new Button("Start Another Quiz", event -> startQuiz());
+        resultLayout.add(restartButton);
     }
 }
